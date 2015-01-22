@@ -123,3 +123,60 @@ create table rentings(
   rent_date date not null,
   return_date date
 );
+
+create or replace sequence seq_customers
+    start with 1
+    increment by 1;
+
+create or replace procedure proc_add_customer(
+    p_credit_card_number varchar,
+    p_credit_card_type smallint,
+    p_credit_card_expiration_month smallint,
+    p_credit_card_expiration_year smallint,
+    p_credit_card_cvv varchar,
+    p_id_package integer)
+    is
+    begin
+        insert into customers 
+            (id,
+            credit_card_number,
+            credit_card_type,
+            credit_card_expiration_month,
+            credit_card_expiration_year,
+            credit_card_cvv,
+            id_package)
+        values
+            (customers_seq.nextval,
+            p_credit_card_number,
+            p_credit_card_type,
+            p_credit_card_expiration_month,
+            p_credit_card_expiration_year,
+            p_credit_card_cvv,
+            p_id_package)
+    end p_add_customer;
+
+create or replace sequence seq_rentings
+    start with 1
+    increment by 1;
+
+create or replace procedure proc_add_rentings(
+    p_id integer,
+    p_id_customer integer,
+    p_id_film integer,
+    p_rent_date date,
+    p_return_date date)
+    is
+    begin
+        insert into rentings
+            (id integer,
+            id_customer integer,
+            id_film integer,
+            rent_date date,
+            return_date date)
+        values
+            (seq_rentings.nextval,
+            p_id_customer integer,
+            p_id_film integer,
+            p_rent_date date,
+            p_return_date date)        
+    end proc_add_rental;
