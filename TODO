@@ -6,9 +6,6 @@ Report
 Misc
 ====
 
-Ask to the teacher
-==================
-
  Constraints
  - Customer must has min 18 years old
  - Validate credit card expiring
@@ -18,3 +15,5 @@ Ask to the teacher
   - Add renting (validate the number of copies and reduce the number if a renting is made)
   - Add conclude_renting
 
+Ask to the teacher
+==================
