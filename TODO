@@ -9,9 +9,12 @@ Misc
 Ask to the teacher
 ==================
 
-  - Ask what to do with the complete constraint with the person, the customer and the employee table.
-  - How to verify password length considering the password hashing.
-  
-  Procedures to add
-  - Add customer
-  - Add renting
+ Constraints
+ - Customer must has min 18 years old
+ - Validate credit card expiring
+ 
+ Modify procedures
+  - Add renting (validate that the customer can rent a film)
+  - Add renting (validate the number of copies and reduce the number if a renting is made)
+  - Add conclude_renting
+
