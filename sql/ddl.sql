@@ -107,7 +107,7 @@ create table customers(
   id integer primary key references persons(id),
   credit_card_number varchar(100) not null,
   credit_card_type smallint not null check(credit_card_type between 0 and 2),
-  -- enum credit_card_type = VISA 0 | MASTER_CARD 1 | AMEX 2
+  -- enum credit_card_type = VISA 0 | MASTER_CARD 1 | AMERICAN_EXPRESS 2
   credit_card_expiration_month smallint not null,
   credit_card_expiration_year smallint not null,
   credit_card_cvv varchar(3) not null,
