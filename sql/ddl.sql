@@ -66,7 +66,7 @@ create table films_scenarists(
   constraint films_scenarists_pk primary key(id_film, id_professionnal)
 );
 
-create table films_actors(
+create table films_roles(
   id integer primary key,
   id_film integer not null references films(id),
   id_professionnal integer not null references professionals(id),
