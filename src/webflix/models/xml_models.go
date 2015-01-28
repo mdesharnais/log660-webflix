@@ -7,7 +7,13 @@ import (
          "encoding/xml"
 )
 
+type Persons struct {
+    XMLName xml.Name `xml:"personnes"`
+    Persons []Person `xml:"personne"`
+}
+
 type Person struct {
+    XMLName xml.Name `xml:"personne"`
 	Nom 			    string      `xml:"nom"`
 	Naissance           Naissance   `xml:"naissance"`
 	Photo				string      `xml:"photo"`
@@ -15,11 +21,13 @@ type Person struct {
 }
 
 type Naissance struct {
-    Anniversaire        time    `xml:"anniversaire"`
+    XMLName xml.Name    `xml:"naissance"`
+    Anniversaire        string  `xml:"anniversaire"`
     Lieu                string  `xml:"lieu"`
 }
 
 type InfoCredit struct {
+    XMLName xml.Name    `xml:"info-credit"`
     Carte               string  `xml:"carte"`
     No                  string  `xml:"no"`
     ExpMois             int8    `xml:"exp-mois"`
@@ -27,12 +35,13 @@ type InfoCredit struct {
 }
 
 type Client struct {
+    XMLName xml.Name    `xml:"client"`
     NomFamille          string      `xml:"nom-famille"`
     Prenom              string      `xml:"prenom"`
     Courriel            string      `xml:"courriel"`
     Tel                 string      `xml:"tel"`
     InfoCredit          InfoCredit  `xml:"info-credit"`
-    Anniversaire        time        `xml:"anniversaire"`
+    Anniversaire        string      `xml:"anniversaire"`
     Adresse             string      `xml:"annee"`
     Ville               string      `xml:"ville"`
     Province            string      `xml:"province"`
@@ -42,6 +51,7 @@ type Client struct {
 }
 
 type Role struct {
+    XMLName xml.Name    `xml:"role"`
     Acteur              string  `xml:"acteur"`
     Personnage          string  `xml:"personnage"`
 }
@@ -61,6 +71,10 @@ type Film struct {
     Poster              string   `xml:"poster"`
 }
 
+func (p Person) String() string {
+         return fmt.Sprintf("\t Nom : %s \n", p.Nom)
+ }
+
 func main() {
      xmlFile, err := os.Open("personnes_latin1.xml")
      if err != nil {
@@ -71,9 +85,11 @@ func main() {
 
      XMLdata, _ := ioutil.ReadAll(xmlFile)
 
-     var c Company
-     xml.Unmarshal(XMLdata, &c)
+     var persons Persons
+     xml.Unmarshal(XMLdata, &persons)
 
-     fmt.Println(c.Staffs)
+     fmt.Println("\t length : ", len(persons.Persons))
+     fmt.Println(persons.Persons)
+  
 }
 
