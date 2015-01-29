@@ -190,19 +190,36 @@ CREATE OR REPLACE PROCEDURE proc_add_renting(
                 p_id_customer,
                 p_id_film,
                 p_rent_date);
-                
-            UPDATE films SET number_of_copies = number_of_copies - 1
-            WHERE id = p_id_film;
         END IF;
     END proc_add_renting;
 	
+CREATE TRIGGER update_inventory_on_renting
+AFTER INSERT ON rentings
+REFERENCING
+    NEW AS new_line
+FOR EACH ROW
+BEGIN
+    UPDATE films SET number_of_copies = number_of_copies - 1
+    WHERE id = new_line.id_film;
+END
+
+CREATE TRIGGER update_inventory_on_return
+AFTER UPDATE OF return_date ON rentings
+REFERENCING
+    NEW AS new_line
+FOR EACH ROW
+WHEN (new_line.return_date IS NOT NULL)
+BEGIN
+    UPDATE films SET number_of_copies = number_of_copies + 1
+	WHERE id = new_line.id_film;
+END
+
 CREATE OR REPLACE PROCEDURE proc_return_renting(
-    p_id integer,
     p_id_customer integer,
     p_id_film integer,
-    p_rent_date date)
+    p_return_date date)
     IS
     BEGIN
-		UPDATE films SET number_of_copies = number_of_copies + 1
-		WHERE id = p_id_film;
+		UPDATE films SET return_date = p_return_date
+		WHERE id_customer = p_id_customer AND id_film = p_id_film;
     END proc_return_renting;
