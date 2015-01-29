@@ -1,18 +1,18 @@
 /**/
-drop table rentings;
-drop table films_countries;
-drop table films_genres;
-drop table films_scenarists;
-drop table films_actors;
-drop table films;
-drop table genres;
-drop table countries;
-drop table languages;
-drop table professionals;
-drop table employees;
-drop table customers;
-drop table packages;
-drop table persons;
+drop table rentings CASCADE CONSTRAINTS;
+drop table films_countries CASCADE CONSTRAINTS;
+drop table films_genres CASCADE CONSTRAINTS;
+drop table professionals CASCADE CONSTRAINTS;
+drop table films_scenarists CASCADE CONSTRAINTS;
+drop table films_actors CASCADE CONSTRAINTS;
+drop table genres CASCADE CONSTRAINTS;
+drop table countries CASCADE CONSTRAINTS;
+drop table films CASCADE CONSTRAINTS;
+drop table languages CASCADE CONSTRAINTS;
+drop table persons CASCADE CONSTRAINTS;
+drop table employees CASCADE CONSTRAINTS;
+drop table customers CASCADE CONSTRAINTS;
+drop table packages CASCADE CONSTRAINTS;
 
 /**/
 
@@ -124,20 +124,22 @@ create table rentings(
   return_date date
 );
 
-create or replace sequence seq_customers
+drop sequence seq_customers;
+create sequence seq_customers
     start with 1
     increment by 1;
 
-create or replace procedure proc_add_customer(
+CREATE OR REPLACE PROCEDURE proc_add_customer(
     p_credit_card_number varchar,
     p_credit_card_type smallint,
     p_credit_card_expiration_month smallint,
     p_credit_card_expiration_year smallint,
     p_credit_card_cvv varchar,
     p_id_package integer)
-    is
-    begin
-        insert into customers 
+    IS
+    BEGIN
+	
+        INSERT INTO customers 
             (id,
             credit_card_number,
             credit_card_type,
@@ -145,38 +147,62 @@ create or replace procedure proc_add_customer(
             credit_card_expiration_year,
             credit_card_cvv,
             id_package)
-        values
-            (customers_seq.nextval,
+        VALUES
+            (seq_customers.NEXTVAL,
             p_credit_card_number,
             p_credit_card_type,
             p_credit_card_expiration_month,
             p_credit_card_expiration_year,
             p_credit_card_cvv,
-            p_id_package)
-    end p_add_customer;
+            p_id_package);
+    END proc_add_customer;
 
-create or replace sequence seq_rentings
+drop sequence seq_rentings;
+
+create sequence seq_rentings
     start with 1
     increment by 1;
 
-create or replace procedure proc_add_rentings(
+CREATE OR REPLACE PROCEDURE proc_add_renting(
     p_id integer,
     p_id_customer integer,
     p_id_film integer,
-    p_rent_date date,
-    p_return_date date)
-    is
-    begin
-        insert into rentings
-            (id integer,
-            id_customer integer,
-            id_film integer,
-            rent_date date,
-            return_date date)
-        values
-            (seq_rentings.nextval,
-            p_id_customer integer,
-            p_id_film integer,
-            p_rent_date date,
-            p_return_date date)        
-    end proc_add_rental;
+    p_rent_date date) AS
+    current_package_max_rentings number;
+    current_rentings_number number;
+    BEGIN
+        SELECT packages.max_films INTO current_rentings_number
+        FROM packages JOIN customers ON customers.id_package = packages.id
+        WHERE customers.id = p_id_customer;
+        
+        SELECT COUNT(*) INTO current_rentings_number
+        FROM rentings JOIN customers ON customers.id = rentings.id_customer
+        WHERE customers.id = p_id_customer and rentings.return_date IS NULL;
+    
+        IF (current_rentings_number < current_package_max_rentings) THEN
+            INSERT INTO rentings
+                (id,
+                id_customer,
+                id_film,
+                rent_date)
+            VALUES
+                (seq_rentings.nextval,
+                p_id_customer,
+                p_id_film,
+                p_rent_date);
+                
+            UPDATE films SET number_of_copies = number_of_copies - 1
+            WHERE id = p_id_film;
+        END IF;
+    END proc_add_renting;
+	
+CREATE OR REPLACE PROCEDURE proc_return_renting(
+    p_id integer,
+    p_id_customer integer,
+    p_id_film integer,
+    p_rent_date date)
+    IS
+    BEGIN
+		UPDATE films SET number_of_copies = number_of_copies + 1
+		WHERE id = p_id_film;
+    END proc_return_renting;
