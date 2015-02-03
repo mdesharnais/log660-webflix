@@ -193,7 +193,7 @@ CREATE OR REPLACE PROCEDURE proc_add_renting(
         END IF;
     END proc_add_renting;
 	
-CREATE TRIGGER update_inventory_on_renting
+CREATE TRIGGER trig_update_inventory_on_renting
 AFTER INSERT ON rentings
 REFERENCING
     NEW AS new_line
@@ -203,7 +203,7 @@ BEGIN
     WHERE id = new_line.id_film;
 END
 
-CREATE TRIGGER update_inventory_on_return
+CREATE TRIGGER trig_update_inventory_on_return
 AFTER UPDATE OF return_date ON rentings
 REFERENCING
     NEW AS new_line
