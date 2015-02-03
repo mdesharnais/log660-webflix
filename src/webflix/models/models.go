@@ -98,5 +98,5 @@ type Director	struct {
 
 func init() {
 	
-	orm.RegisterModel(...)
+	orm.RegisterModel(new(Film), new(Country), new(Genre), new(Renting), new(Person), new(Customer), new(Employee), new(Package), new(Professionnal), new(Role), new(Scenarist), new(Director))
 }
