@@ -201,21 +201,20 @@ CREATE OR REPLACE PROCEDURE proc_add_renting(
         p_rent_date);
     END proc_add_renting;
 	
-CREATE TRIGGER trig_validate_persons_columns
-BEFORE INSERT ON persons
-FOR EACH ROW
-BEGIN
-    IF (MONTHS_BETWEEN(SYSDATE, :NEW.birthdate)/12 < 18) THEN
-    	RAISE_APPLICATION_ERROR(-20001, 'Cannot insert person because the person is not 18 years old.');
-    END IF;
-END
-
 CREATE TRIGGER trig_validate_customer_columns
 BEFORE INSERT ON customers
 FOR EACH ROW
+DECLARE
+v_birthdate date;
 BEGIN
     IF (TO_DATE(:NEW.credit_card_expiration_year || '-'  :NEW.credit_card_expiration_month, 'YYYY-MM') < TO_DATE(TO_CHAR(SYSDATE, 'YYYY-MM'), 'YYYY-MM')) THEN
     	RAISE_APPLICATION_ERROR(-20001, 'Cannot insert customer because his credit card is expired.');
+    END IF;
+    
+    SELECT birthdate INTO v_birthdate from persons WHERE id = :NEW.id;
+    
+    IF (MONTHS_BETWEEN(SYSDATE, v_birthdate)/12 < 18) THEN
+    	RAISE_APPLICATION_ERROR(-20001, 'Cannot insert customer because the related person is not 18 years old.');
     END IF;
 END
 
