@@ -87,7 +87,7 @@ create table persons(
   -- enum province = AB 0 | BC 1 | MB 2 | NB 3 | NL 4 | NS 5 | ON 6 | PE 7 | QC 8 | SK 9
   address_postal_code varchar(6) not null,
   birthdate date not null,
-  password raw(32) not null
+  password raw(32) not null check (REGEXP_LIKE (password, '^[a-zA-Z0-9]*$') and LENGTH(password) >= 5) 
 );
 
 create table employees(
@@ -193,14 +193,30 @@ CREATE OR REPLACE PROCEDURE proc_add_renting(
         END IF;
     END proc_add_renting;
 	
+CREATE TRIGGER trig_validate_persons_columns
+BEFORE INSERT ON persons
+FOR EACH ROW
+BEGIN
+    IF (MONTHS_BETWEEN(SYSDATE, :NEW.birthdate)/12 < 18) THEN
+    	RAISE_APPLICATION_ERROR(-20001, 'Cannot insert person because the person is not 18 years old.');
+    END IF;
+END
+
+CREATE TRIGGER trig_validate_customer_columns
+BEFORE INSERT ON customers
+FOR EACH ROW
+BEGIN
+    IF (TO_DATE(:NEW.credit_card_expiration_year || '-'  :NEW.credit_card_expiration_month, 'YYYY-MM') < TO_DATE(TO_CHAR(SYSDATE, 'YYYY-MM'), 'YYYY-MM')) THEN
+    	RAISE_APPLICATION_ERROR(-20001, 'Cannot insert customer because his credit card is expired.');
+    END IF;
+END
+
 CREATE TRIGGER trig_update_inventory_on_renting
 AFTER INSERT ON rentings
-REFERENCING
-    NEW AS new_line
 FOR EACH ROW
 BEGIN
     UPDATE films SET number_of_copies = number_of_copies - 1
-    WHERE id = new_line.id_film;
+    WHERE id = :NEW.id_film;
 END
 
 CREATE TRIGGER trig_update_inventory_on_return
