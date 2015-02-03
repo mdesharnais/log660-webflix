@@ -137,7 +137,7 @@ create sequence seq_rentings
     increment by 1;
 
 CREATE OR REPLACE VIEW films_available AS
-select films.title, films.number_of_copies as total, count(rentings.id) as rented
-from films
-left join RENTINGS on films.ID = RENTINGS.ID_FILM
-group by films.title, films.number_of_copies; 
+SELECT films.title, films.number_of_copies AS total, count(rentings.id) as rented
+FROM films
+LEFT JOIN RENTINGS on films.id = rentings.id_film
+GROUP BY films.title, films.number_of_copies;
