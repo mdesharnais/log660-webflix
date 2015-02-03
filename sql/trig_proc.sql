@@ -46,10 +46,11 @@ BEGIN
 END trig_check_max_renting;
 
 CREATE OR REPLACE PROCEDURE proc_add_renting(
-    p_id integer,
+    --p_id integer,
     p_id_customer integer,
-    p_id_film integer,
-    p_rent_date date) AS
+    p_id_film integer--,
+    --p_rent_date date
+	) AS
     BEGIN
     INSERT INTO rentings
         (id,
@@ -60,7 +61,7 @@ CREATE OR REPLACE PROCEDURE proc_add_renting(
         (seq_rentings.nextval,
         p_id_customer,
         p_id_film,
-        p_rent_date);
+        SYSDATE);
     END proc_add_renting;
 	
 CREATE OR REPLACE TRIGGER trig_validate_customer_columns
@@ -80,24 +81,24 @@ BEGIN
     END IF;
 END trig_validate_customer_columns;
 
-CREATE OR REPLACE TRIGGER trig_update_inv_on_rent
-AFTER INSERT ON rentings
-FOR EACH ROW
-BEGIN
-    UPDATE films SET number_of_copies = number_of_copies - 1
-    WHERE id = :NEW.id_film;
-END trig_update_inv_on_rent;
-
-CREATE OR REPLACE TRIGGER trig_update_inv_on_ret
-AFTER UPDATE OF return_date ON rentings
-REFERENCING
-    NEW AS new_line
-FOR EACH ROW
-WHEN (new_line.return_date IS NOT NULL)
-BEGIN
-    UPDATE films SET number_of_copies = number_of_copies + 1
-	WHERE id = new_line.id_film;
-END trig_update_inv_on_ret;
+--CREATE OR REPLACE TRIGGER trig_update_inv_on_rent
+--AFTER INSERT ON rentings
+--FOR EACH ROW
+--BEGIN
+--	UPDATE films SET number_of_copies = number_of_copies - 1
+--	WHERE id = :NEW.id_film;
+--END trig_update_inv_on_rent;
+--
+--CREATE OR REPLACE TRIGGER trig_update_inv_on_ret
+--AFTER UPDATE OF return_date ON rentings
+--REFERENCING
+--	NEW AS new_line
+--FOR EACH ROW
+--WHEN (new_line.return_date IS NOT NULL)
+--BEGIN
+--	UPDATE films SET number_of_copies = number_of_copies + 1
+--	WHERE id = new_line.id_film;
+--END trig_update_inv_on_ret;
 
 CREATE OR REPLACE PROCEDURE proc_return_renting(
     p_id_customer integer,
