@@ -46,10 +46,8 @@ BEGIN
 END trig_check_max_renting;
 
 CREATE OR REPLACE PROCEDURE proc_add_renting(
-    --p_id integer,
     p_id_customer integer,
-    p_id_film integer--,
-    --p_rent_date date
+    p_id_film integer
 	) AS
     BEGIN
     INSERT INTO rentings
@@ -80,32 +78,3 @@ BEGIN
     	RAISE_APPLICATION_ERROR(-20001, 'Cannot insert customer because the related person is not 18 years old.');
     END IF;
 END trig_validate_customer_columns;
-
---CREATE OR REPLACE TRIGGER trig_update_inv_on_rent
---AFTER INSERT ON rentings
---FOR EACH ROW
---BEGIN
---	UPDATE films SET number_of_copies = number_of_copies - 1
---	WHERE id = :NEW.id_film;
---END trig_update_inv_on_rent;
---
---CREATE OR REPLACE TRIGGER trig_update_inv_on_ret
---AFTER UPDATE OF return_date ON rentings
---REFERENCING
---	NEW AS new_line
---FOR EACH ROW
---WHEN (new_line.return_date IS NOT NULL)
---BEGIN
---	UPDATE films SET number_of_copies = number_of_copies + 1
---	WHERE id = new_line.id_film;
---END trig_update_inv_on_ret;
-
-CREATE OR REPLACE PROCEDURE proc_return_renting(
-    p_id_customer integer,
-    p_id_film integer,
-    p_return_date date)
-    IS
-    BEGIN
-		UPDATE films SET return_date = p_return_date
-		WHERE id_customer = p_id_customer AND id_film = p_id_film;
-    END proc_return_renting;
