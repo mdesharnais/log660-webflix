@@ -1,10 +1,10 @@
-/**/
+
 drop table rentings cascade constraints;
 drop table films_countries cascade constraints;
 drop table films_genres cascade constraints;
 drop table films_roles cascade constraints;
 drop table films_scenarists cascade constraints;
-drop table films_actors cascade constraints;
+--drop table films_actors cascade constraints;
 drop table professionals cascade constraints;
 drop table genres cascade constraints;
 drop table countries cascade constraints;
@@ -73,7 +73,7 @@ create table films_roles(
   id_film integer not null references films(id),
   id_professionnal integer not null references professionals(id),
   character varchar(100) not null,
-  constraint films_actors_un1 unique(id_film, id_professionnal, character)
+  constraint films_roles_un1 unique(id_film, id_professionnal, character)
 );
 
 create table persons(
@@ -112,7 +112,7 @@ create table customers(
   -- enum credit_card_type = VISA 0 | MASTER_CARD 1 | AMERICAN_EXPRESS 2
   credit_card_expiration_month smallint not null,
   credit_card_expiration_year smallint not null,
-  credit_card_cvv varchar(3) not null,
+  credit_card_cvv varchar(3),
   id_package integer references packages(id)
   -- contraints
   -- credit card must not be expired
