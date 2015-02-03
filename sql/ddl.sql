@@ -221,25 +221,6 @@ BEGIN
     END IF;
 END
 
-CREATE TRIGGER trig_update_inventory_on_renting
-AFTER INSERT ON rentings
-FOR EACH ROW
-BEGIN
-    UPDATE films SET number_of_copies = number_of_copies - 1
-    WHERE id = :NEW.id_film;
-END
-
-CREATE TRIGGER trig_update_inventory_on_return
-AFTER UPDATE OF return_date ON rentings
-REFERENCING
-    NEW AS new_line
-FOR EACH ROW
-WHEN (new_line.return_date IS NOT NULL)
-BEGIN
-    UPDATE films SET number_of_copies = number_of_copies + 1
-	WHERE id = new_line.id_film;
-END
-
 CREATE OR REPLACE PROCEDURE proc_return_renting(
     p_id_customer integer,
     p_id_film integer,
