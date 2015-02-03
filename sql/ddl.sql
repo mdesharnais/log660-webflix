@@ -87,7 +87,7 @@ create table persons(
   -- enum province = AB 0 | BC 1 | MB 2 | NB 3 | NL 4 | NS 5 | ON 6 | PE 7 | QC 8 | SK 9
   address_postal_code varchar(6) not null,
   birthdate date not null,
-  password raw(32) not null check (REGEXP_LIKE (password, '^[a-zA-Z0-9]*$') and LENGTH(password) >= 5) 
+  password vachar(20) not null check (REGEXP_LIKE (password, '^[a-zA-Z0-9]*$') and LENGTH(password) >= 5) 
 );
 
 create table employees(
@@ -163,34 +163,42 @@ create sequence seq_rentings
     start with 1
     increment by 1;
 
+CREATE TRIGGER trig_check_max_renting
+BEFORE INSERT ON rentings
+FOR EACH ROW
+DECLARE
+    current_package_max_rentings number;
+    current_rentings_number number;
+BEGIN
+     SELECT packages.max_films INTO current_rentings_number
+     FROM packages JOIN customers ON customers.id_package = packages.id
+     WHERE customers.id = :NEW.id_customer;
+        
+     SELECT COUNT(*) INTO current_rentings_number
+     FROM rentings JOIN customers ON customers.id = rentings.id_customer
+     WHERE customers.id = :NEW.id_customer and rentings.return_date IS NULL;
+    
+     IF (current_rentings_number > current_package_max_rentings) THEN
+     	RAISE_APPLICATION_ERROR(-20001, 'Cannot insert renting because the customer has exceeded the number of rented films of his package');
+     END IF;
+END
+
 CREATE OR REPLACE PROCEDURE proc_add_renting(
     p_id integer,
     p_id_customer integer,
     p_id_film integer,
     p_rent_date date) AS
-    current_package_max_rentings number;
-    current_rentings_number number;
     BEGIN
-        SELECT packages.max_films INTO current_rentings_number
-        FROM packages JOIN customers ON customers.id_package = packages.id
-        WHERE customers.id = p_id_customer;
-        
-        SELECT COUNT(*) INTO current_rentings_number
-        FROM rentings JOIN customers ON customers.id = rentings.id_customer
-        WHERE customers.id = p_id_customer and rentings.return_date IS NULL;
-    
-        IF (current_rentings_number < current_package_max_rentings) THEN
-            INSERT INTO rentings
-                (id,
-                id_customer,
-                id_film,
-                rent_date)
-            VALUES
-                (seq_rentings.nextval,
-                p_id_customer,
-                p_id_film,
-                p_rent_date);
-        END IF;
+    INSERT INTO rentings
+        (id,
+        id_customer,
+        id_film,
+        rent_date)
+    VALUES
+        (seq_rentings.nextval,
+        p_id_customer,
+        p_id_film,
+        p_rent_date);
     END proc_add_renting;
 	
 CREATE TRIGGER trig_validate_persons_columns
