@@ -23,7 +23,7 @@ create table languages(
 create table professionals(
   id integer primary key,
   first_name varchar(100) not null,
-  last_name varchar(100) not null,
+  last_name varchar(100),
   birthdate date,
   birthplace varchar(100),
   biography varchar(4000)
