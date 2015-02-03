@@ -26,6 +26,9 @@ create table films(
   title varchar(100) not null unique,
   year smallint,
   number_of_copies smallint not null,
+  summary varchar(4000),
+  length_in_minutes smallint,
+  id_director integer references professionals(id),
   id_language integer references languages(id)
 );
 
