@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -25,8 +26,11 @@ public class LectureBD {
 
 	public enum Province {
 		AB, BC, MB, NB,
-		NL, NS, ON, PE, QC, SK 
+		NL, NS, ON, PE, QC, SK, NT
 	}
+	
+	private int nextLanguageId = 0;
+	private int nextCountryId = 0;
 	
 	public enum CreditCardType
 	{
@@ -325,7 +329,7 @@ public class LectureBD {
 		String biography = bio;
 		
 		if (biography != null)
-			biography = bio.substring(0, Math.min(bio.length(), 3999));
+			biography = bio.substring(0, Math.min(bio.length(), 3000));
 		
 		String names[] = nom.split(" ", 2);
 				
@@ -386,6 +390,254 @@ public class LectureBD {
 			ArrayList<String> genres, String realisateurNom, int realisateurId,
 			ArrayList<String> scenaristes, ArrayList<Role> roles,
 			String poster, ArrayList<String> annonces) {
+			
+		PreparedStatement queryPreparedStatement = null;
+		PreparedStatement preparedStatement = null;
+		String select = null;
+		ResultSet result = null;
+		String insertTableSQL = null;
+		
+		int id_language = 0;
+		try {
+		
+		select = "select id from languages where name=?";
+		queryPreparedStatement = dbConnection.prepareStatement(select);
+		queryPreparedStatement.setString(1, langue);
+		result = queryPreparedStatement.executeQuery();
+		if (!result.next())
+		{
+			insertTableSQL = "INSERT INTO languages"
+					+ "(id, name) VALUES"
+					+ "(?,?)";
+			
+			preparedStatement = null;
+			try {
+			preparedStatement = dbConnection.prepareStatement(insertTableSQL);
+			preparedStatement.setInt(1, ++nextLanguageId);
+			id_language = nextLanguageId;
+			preparedStatement.setString(2, langue);
+			System.out.println(insertTableSQL + " id " + nextLanguageId + " langue " + langue);
+			preparedStatement.executeUpdate();
+			}
+			catch (SQLException e) {
+				 
+				System.out.println(e.getMessage());
+			} finally {
+				if (preparedStatement != null) {
+					try {
+						preparedStatement.close();
+						queryPreparedStatement.close();
+					} catch (SQLException e) {
+						// TODO Bloc catch généré automatiquement
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		else
+		{
+			id_language = result.getInt("id");
+			queryPreparedStatement.close();
+		}
+		
+		insertTableSQL = "INSERT INTO films"
+				+ "(id, title, year, number_of_copies, summary, length_in_minutes, "
+				+ "id_director, id_language) VALUES"
+				+ "(?,?,?,?,?,?,?,?)";
+		
+		
+		
+		preparedStatement = dbConnection.prepareStatement(insertTableSQL);
+		preparedStatement.setInt(1, id);
+		preparedStatement.setString(2, titre);
+		// TODO: randomize the number
+		
+		preparedStatement.setInt(3, annee);
+		preparedStatement.setInt(4, 1 + (int)(Math.random()*100));
+		preparedStatement.setString(5, resume);
+		preparedStatement.setInt(6, duree);
+		preparedStatement.setInt(7, realisateurId);
+		preparedStatement.setInt(8, id_language);
+		System.out.println(insertTableSQL + " id " + id + " id_language " + id_language + " id_realisation " + realisateurId);
+		preparedStatement.executeUpdate();
+		}
+		catch (SQLException e) {
+			 
+			System.out.println(e.getMessage());
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// TODO Bloc catch généré automatiquement
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		
+		for (String currentCountry: pays)
+		{
+			
+			select = "select id from countries where name=?";
+			try {
+				queryPreparedStatement = dbConnection.prepareStatement(select);
+				queryPreparedStatement.setString(1, currentCountry);
+				result = queryPreparedStatement.executeQuery();
+			} catch (SQLException e1) {
+				// TODO Bloc catch généré automatiquement
+				try {
+					queryPreparedStatement.close();
+				} catch (SQLException e) {
+					// TODO Bloc catch généré automatiquement
+					e.printStackTrace();
+				}
+				e1.printStackTrace();
+			}
+
+			
+			int id_country = 0;
+			
+			try {
+				if (!result.next())
+				{
+					insertTableSQL = "INSERT INTO countries"
+							+ "(id, name) VALUES"
+							+ "(?,?)";
+					preparedStatement = null;
+					try {
+					preparedStatement = dbConnection.prepareStatement(insertTableSQL);
+					preparedStatement.setInt(1, ++nextCountryId);
+					id_country = nextCountryId;
+					preparedStatement.setString(2, currentCountry);
+					System.out.println(insertTableSQL + " id " + nextCountryId + " name " + currentCountry);
+					preparedStatement.executeUpdate();
+					}
+					catch (SQLException e) {
+						 
+						System.out.println(e.getMessage());
+					} finally {
+						if (preparedStatement != null) {
+							try {
+								preparedStatement.close();
+							} catch (SQLException e) {
+								// TODO Bloc catch généré automatiquement
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+				else
+				{
+					try {
+						id_country = result.getInt("id");
+					} catch (SQLException e) {
+						// TODO Bloc catch généré automatiquement
+						e.printStackTrace();
+					}
+				}
+				
+			} catch (SQLException e1) {
+				// TODO Bloc catch généré automatiquement
+				e1.printStackTrace();
+			}
+			finally
+			{
+				try {
+					queryPreparedStatement.close();
+				} catch (SQLException e) {
+					// TODO Bloc catch généré automatiquement
+					e.printStackTrace();
+				}
+			}
+			
+			insertTableSQL = "INSERT INTO films_countries"
+					+ "(id_film, id_country) VALUES"
+					+ "(?,?)";
+			
+			preparedStatement = null;
+			try {
+			preparedStatement = dbConnection.prepareStatement(insertTableSQL);
+			preparedStatement.setInt(1, id);
+			preparedStatement.setInt(2, id_country);
+			
+			System.out.println(insertTableSQL + " id_film " + id + " id_country " + id_country);
+			preparedStatement.executeUpdate();
+			}
+			catch (SQLException e) {
+				 
+				System.out.println(e.getMessage());
+			} finally {
+				if (preparedStatement != null) {
+					try {
+						preparedStatement.close();
+					} catch (SQLException e) {
+						// TODO Bloc catch généré automatiquement
+						e.printStackTrace();
+					}
+				}
+			}
+			
+		}
+		
+				
+		for (Role role: roles)
+		{
+			
+			
+			select = "select id from professionals where first_name || ' ' || last_name=?";
+			int id_professional = 0;
+			try {
+				queryPreparedStatement = dbConnection.prepareStatement(select);
+				queryPreparedStatement.setString(1, role.nom);
+				result = queryPreparedStatement.executeQuery();
+				
+				if (result.next())
+					id_professional = result.getInt("id");
+					
+				
+			} catch (SQLException e1) {
+				// TODO Bloc catch généré automatiquement
+				e1.printStackTrace();
+			} finally {
+				try {
+					queryPreparedStatement.close();
+				} catch (SQLException e) {
+					// TODO Bloc catch généré automatiquement
+					e.printStackTrace();
+				}
+			}
+			
+			insertTableSQL = "INSERT INTO films_roles"
+					+ "(id, id_film, id_professional, character) VALUES"
+					+ "(?,?,?,?)";
+			
+			preparedStatement = null;
+			try {
+			preparedStatement = dbConnection.prepareStatement(insertTableSQL);
+			preparedStatement.setInt(1, role.id);
+			preparedStatement.setInt(2, id);
+			preparedStatement.setInt(3, id_professional);
+			preparedStatement.setString(4, role.personnage);
+			preparedStatement.executeUpdate();
+			}
+			catch (SQLException e) {
+				 
+				System.out.println(e.getMessage());
+			} finally {
+				if (preparedStatement != null) {
+					try {
+						preparedStatement.close();
+					} catch (SQLException e) {
+						// TODO Bloc catch généré automatiquement
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		
+		
+		
 		// On le film dans la BD
 	}
 
@@ -416,6 +668,9 @@ public class LectureBD {
 				+ "(id, first_name, last_name, email, telephone, address_civic_number, "
 				+ "address_street, address_city, address_province, address_postal_code, birthdate, password) VALUES"
 				+ "(?,?,?,?,?,?,?,?,?,?,?,?)";
+		
+		if (!codePostal.equals(""))
+			codePostal = codePostal.replace(" ", "");
 		
 		PreparedStatement preparedStatement = null;
 		try {
@@ -449,13 +704,19 @@ public class LectureBD {
 			}
 		}
 		
-		// TODO: faire une requête sur la table package pour trouver le id du forfait avec le nom égale
-		// au forfait en paramètre.
+		int idPackage = 0;
+		
+		if (forfait.equals("D"))
+			idPackage = 1;
+		else if (forfait.equals("I"))
+			idPackage = 2;
+		else if (forfait.equals("A"))
+			idPackage = 3;
 		
 		insertTableSQL = "INSERT INTO customers"
 				+ "(id, credit_card_number, credit_card_type, credit_card_expiration_month, "
-				+ "credit_card_expiration_year, credit_card_cvv, id_package) VALUES"
-				+ "(?,?,?,?,?,?,?)";
+				+ "credit_card_expiration_year, id_package) VALUES"
+				+ "(?,?,?,?,?,?)";
 		try {
 			preparedStatement = dbConnection.prepareStatement(insertTableSQL);
 			preparedStatement.setInt(1, id);
@@ -463,8 +724,7 @@ public class LectureBD {
 			preparedStatement.setInt(3, CreditCardType.valueOf(carte).ordinal());
 			preparedStatement.setInt(4, expMois);
 			preparedStatement.setInt(5, expAnnee);
-			preparedStatement.setString(6, cvv);
-			preparedStatement.setString(7, idPackage);
+			preparedStatement.setInt(6, idPackage);
 			// execute insert SQL stetement
 			preparedStatement.executeUpdate();
 			}
@@ -526,8 +786,8 @@ public class LectureBD {
 	public static void main(String[] args) {
 		LectureBD lecture = new LectureBD();
 
-		//lecture.lecturePersonnes(args[0]);
-		//lecture.lectureFilms(args[1]);
+		lecture.lecturePersonnes(args[0]);
+		lecture.lectureFilms(args[1]);
 		lecture.lectureClients(args[2]);
 		lecture.closeConnection();
 	}
