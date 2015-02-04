@@ -68,9 +68,9 @@ FOR EACH ROW
 DECLARE
 v_birthdate date;
 BEGIN
-    IF (TO_DATE(:NEW.credit_card_expiration_year || '-' || :NEW.credit_card_expiration_month, 'YYYY-MM') < TO_DATE(TO_CHAR(SYSDATE, 'YYYY-MM'), 'YYYY-MM')) THEN
-    	RAISE_APPLICATION_ERROR(-20001, 'Cannot insert customer because his credit card is expired.');
-    END IF;
+--	IF (TO_DATE(:NEW.credit_card_expiration_year || '-' || :NEW.credit_card_expiration_month, 'YYYY-MM') < TO_DATE(TO_CHAR(SYSDATE, 'YYYY-MM'), 'YYYY-MM')) THEN
+--		RAISE_APPLICATION_ERROR(-20001, 'Cannot insert customer because his credit card is expired.');
+--	END IF;
     
     SELECT birthdate INTO v_birthdate from persons WHERE id = :NEW.id;
     

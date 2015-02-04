@@ -7,3 +7,4 @@ values (2, 'I', 10, 5, 30);
 insert into packages
 values (3, 'A', 15, 10, 0);
 
+commit;
