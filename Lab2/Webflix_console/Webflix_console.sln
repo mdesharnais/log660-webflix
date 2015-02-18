@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Webflix_console", "Webflix_console\Webflix_console.fsproj", "{BC07C986-CC92-4819-B3BA-4CD3B23C58DE}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "WebflixModel", "WebflixModel\WebflixModel.fsproj", "{C6560BD0-24D5-41B7-800E-22A33483C7E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{BC07C986-CC92-4819-B3BA-4CD3B23C58DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC07C986-CC92-4819-B3BA-4CD3B23C58DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BC07C986-CC92-4819-B3BA-4CD3B23C58DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6560BD0-24D5-41B7-800E-22A33483C7E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6560BD0-24D5-41B7-800E-22A33483C7E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6560BD0-24D5-41B7-800E-22A33483C7E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6560BD0-24D5-41B7-800E-22A33483C7E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
