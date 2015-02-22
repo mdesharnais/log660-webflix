@@ -84,7 +84,7 @@ create table persons(
   address_civic_number varchar(10) not null,
   address_street varchar(100) not null,
   address_city varchar(100) not null,
-  address_province smallint not null check(address_province between 0 and 9),
+  address_province smallint not null check(address_province between 0 and 10),
   -- enum province = AB 0 | BC 1 | MB 2 | NB 3 | NL 4 | NS 5 | ON 6 | PE 7 | QC 8 | SK 9
   address_postal_code varchar(6) not null,
   birthdate date not null,
