@@ -31,6 +31,8 @@ public class LectureBD {
 	
 	private int nextLanguageId = 0;
 	private int nextCountryId = 0;
+	private int nextGenreId = 0;
+	private int nextRoleId = 0;
 	
 	public enum CreditCardType
 	{
@@ -396,7 +398,7 @@ public class LectureBD {
 		String select = null;
 		ResultSet result = null;
 		String insertTableSQL = null;
-		
+				
 		int id_language = 0;
 		try {
 		
@@ -449,9 +451,7 @@ public class LectureBD {
 		
 		preparedStatement = dbConnection.prepareStatement(insertTableSQL);
 		preparedStatement.setInt(1, id);
-		preparedStatement.setString(2, titre);
-		// TODO: randomize the number
-		
+		preparedStatement.setString(2, titre);		
 		preparedStatement.setInt(3, annee);
 		preparedStatement.setInt(4, 1 + (int)(Math.random()*100));
 		preparedStatement.setString(5, resume);
@@ -473,6 +473,111 @@ public class LectureBD {
 					e.printStackTrace();
 				}
 			}
+		}
+		
+		
+		for (String currentGenre: genres)
+		{
+			
+			select = "select id from genres where name=?";
+			try {
+				queryPreparedStatement = dbConnection.prepareStatement(select);
+				queryPreparedStatement.setString(1, currentGenre);
+				result = queryPreparedStatement.executeQuery();
+			} catch (SQLException e1) {
+				// TODO Bloc catch généré automatiquement
+				try {
+					queryPreparedStatement.close();
+				} catch (SQLException e) {
+					// TODO Bloc catch généré automatiquement
+					e.printStackTrace();
+				}
+				e1.printStackTrace();
+			}
+
+			
+			int id_genre = 0;
+			
+			try {
+				if (!result.next())
+				{
+					insertTableSQL = "INSERT INTO genres"
+							+ "(id, name) VALUES"
+							+ "(?,?)";
+					preparedStatement = null;
+					try {
+					preparedStatement = dbConnection.prepareStatement(insertTableSQL);
+					preparedStatement.setInt(1, ++nextGenreId);
+					id_genre = nextGenreId;
+					preparedStatement.setString(2, currentGenre);
+					System.out.println(insertTableSQL + " id " + nextGenreId + " name " + currentGenre);
+					preparedStatement.executeUpdate();
+					}
+					catch (SQLException e) {
+						 
+						System.out.println(e.getMessage());
+					} finally {
+						if (preparedStatement != null) {
+							try {
+								preparedStatement.close();
+							} catch (SQLException e) {
+								// TODO Bloc catch généré automatiquement
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+				else
+				{
+					try {
+						id_genre = result.getInt("id");
+					} catch (SQLException e) {
+						// TODO Bloc catch généré automatiquement
+						e.printStackTrace();
+					}
+				}
+				
+			} catch (SQLException e1) {
+				// TODO Bloc catch généré automatiquement
+				e1.printStackTrace();
+			}
+			finally
+			{
+				try {
+					queryPreparedStatement.close();
+				} catch (SQLException e) {
+					// TODO Bloc catch généré automatiquement
+					e.printStackTrace();
+				}
+			}
+			
+			insertTableSQL = "INSERT INTO films_genres"
+					+ "(id_film, id_genre) VALUES"
+					+ "(?,?)";
+			
+			preparedStatement = null;
+			try {
+			preparedStatement = dbConnection.prepareStatement(insertTableSQL);
+			preparedStatement.setInt(1, id);
+			preparedStatement.setInt(2, id_genre);
+			
+			System.out.println(insertTableSQL + " id_film " + id + " id_genre " + id_genre);
+			preparedStatement.executeUpdate();
+			}
+			catch (SQLException e) {
+				 
+				System.out.println(e.getMessage());
+			} finally {
+				if (preparedStatement != null) {
+					try {
+						preparedStatement.close();
+					} catch (SQLException e) {
+						// TODO Bloc catch généré automatiquement
+						e.printStackTrace();
+					}
+				}
+			}
+			
 		}
 		
 		
@@ -615,7 +720,7 @@ public class LectureBD {
 			preparedStatement = null;
 			try {
 			preparedStatement = dbConnection.prepareStatement(insertTableSQL);
-			preparedStatement.setInt(1, role.id);
+			preparedStatement.setInt(1, ++nextRoleId);
 			preparedStatement.setInt(2, id);
 			preparedStatement.setInt(3, id_professional);
 			preparedStatement.setString(4, role.personnage);
@@ -635,6 +740,58 @@ public class LectureBD {
 				}
 			}
 		}
+		
+		for (String scenarist: scenaristes)
+		{			
+			select = "select id from professionals where first_name || ' ' || last_name=?";
+			int id_professional = 0;
+			try {
+				queryPreparedStatement = dbConnection.prepareStatement(select);
+				queryPreparedStatement.setString(1, scenarist);
+				result = queryPreparedStatement.executeQuery();
+				
+				if (result.next())
+					id_professional = result.getInt("id");
+					
+				
+			} catch (SQLException e1) {
+				// TODO Bloc catch généré automatiquement
+				e1.printStackTrace();
+			} finally {
+				try {
+					queryPreparedStatement.close();
+				} catch (SQLException e) {
+					// TODO Bloc catch généré automatiquement
+					e.printStackTrace();
+				}
+			}
+			
+			insertTableSQL = "INSERT INTO films_scenarists"
+					+ "(id_film, id_professional) VALUES"
+					+ "(?,?)";
+			
+			preparedStatement = null;
+			try {
+			preparedStatement = dbConnection.prepareStatement(insertTableSQL);
+			preparedStatement.setInt(1, id);
+			preparedStatement.setInt(2, id_professional);
+			preparedStatement.executeUpdate();
+			}
+			catch (SQLException e) {
+				 
+				System.out.println(e.getMessage());
+			} finally {
+				if (preparedStatement != null) {
+					try {
+						preparedStatement.close();
+					} catch (SQLException e) {
+						// TODO Bloc catch généré automatiquement
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		
 		
 		
 		
