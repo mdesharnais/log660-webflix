@@ -4,7 +4,6 @@ drop table films_countries cascade constraints;
 drop table films_genres cascade constraints;
 drop table films_roles cascade constraints;
 drop table films_scenarists cascade constraints;
---drop table films_actors cascade constraints;
 drop table professionals cascade constraints;
 drop table genres cascade constraints;
 drop table countries cascade constraints;
