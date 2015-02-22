@@ -5,108 +5,194 @@ webflix show 1
 webflix rent 1
 *)
 
+open System
 open Nessos.UnionArgParser
+open Webflix
 
-
+// --------------------------------------------------
+// Utility types
+// --------------------------------------------------
 
 type SearchArguments =
     | Title of string
     | YearMin of int
     | YearMax of int
-    | Countries of string
+    | Countrie of string
     | Language of string
-    | Genres of string
+    | Genre of string
     | Director of string
-    | Actors of string
+    | Actor of string
 with
     interface IArgParserTemplate with
-        member s.Usage =
-            match s with
-            | Title _ -> "specify a working directory."
-            | YearMin _ -> "specify a listener (hostname : port)."
-            | YearMax _ -> "binary data in base64 encoding."
-            | Countries _ -> "specify a primary port."
-            | Language _ -> "set the log level."
-            | Genres _ -> "detach daemon from console."
-            | Director _ -> "specify a primary port."
-            | Actors _ -> "set the log level."
+        member s.Usage = ""
 
-let show sa =
-    match sa with
-    | Title(s) -> s
-    | YearMin(i) -> i.ToString ()
-    | Language(s) -> s
-    | _ -> "blablabla"
 
-type Id = uint32
-type CustomerInfo = Id
-type Year = int
-type FilmInfo = {Id : Id; title : string; year : Year}
+type Either<'a, 'b> =
+    | Left of 'a
+    | Right of 'b
 
-let foo (sas : SearchArguments) : FilmInfo list = []
+// --------------------------------------------------
+// Utility functions
+// --------------------------------------------------
 
- 
-// build the argument parser
-let parser = UnionArgParser.Create<SearchArguments>()
- 
-// get usage text
-let usage = parser.Usage()
-// output:
-//    --working-directory <string>: specify a working directory.
-//    --listener <host:string> <port:int>: specify a listener (hostname : port).
-//    --log-level <int>: set the log level.
-//    --detach: detach daemon from console.
-//    --help [-h|/h|/help|/?]: display this list of options.
+let lookupBy f x = List.tryPick (fun (k, v) -> if f k x then Some v else None)
+
+
+let tryParseInt s =
+    let (b, i) = System.Int32.TryParse s
+    if b then Some i else None
+
+
+let (>>=) (m : Either<'a,'b>) (f : 'b -> Either<'a,'c>) =
+    match m with
+    | Left(a) -> Left a
+    | Right(b) -> f b
+
+
+let either f g e =
+    match e with
+    | Left x -> f x
+    | Right y -> g y
+
+
+let matchOption n s o =
+    match o with
+    | None -> n
+    | Some x -> s x
+
+
+let extractSingleton xs =
+    match xs with
+    | [x] -> Some x
+    | _ -> None
+
+// --------------------------------------------------
+// Core features
+// --------------------------------------------------
+
+let connect () : CustomerInfo option =
+    try
+        let line = IO.File.ReadAllText(".webflix", Text.Encoding.UTF8)
+        match line.Split ' ' with
+        | [|username; password|] ->
+            match connectCustomer username password with
+            | None ->  eprintfn "Invalid username or password."; None
+            | Some id -> Some id
+        | _ -> eprintf "Invalid configuration file."; None
+    with
+        | _ -> eprintf "Invalid configuration file."; None
+
 
 let doConnect argv =
     match argv with
-    | username :: password -> printfn "connecting"; 0
-    | _ -> printfn "Invalid arguments. Syntax: webflix connect <email> <password>"; -1
+    | [username; password] ->
+        IO.File.WriteAllText(".webflix", (username + " " + password), Text.Encoding.UTF8)
+        matchOption -1 (fun _ -> 0) (connect ())
+    | _ -> eprintfn "Invalid arguments. Syntax: webflix connect <email> <password>"; -1
+
+
+let doDisconnect _ argv =
+    match argv with
+    | [] -> IO.File.Delete ".webflix"; 0
+    | _ -> eprintfn "Invalid arguments. Syntax: webflix disconnect"; -1
+    
 
 let doSearch argv =
-    printfn "searching"
+    let parser = UnionArgParser.Create<SearchArguments>()
     let sas = (parser.Parse (List.toArray argv)).GetAllResults ()
-    //let b = List.map show sas
-    //let c = String.concat ", " b
 
-    let mutable title : string = ""
-    let mutable yearMin : Year = 0
-    let mutable yearMax : Year = 0
-    let mutable countries : string list = []
-    let mutable language : string = ""
-    let mutable genres : string list = []
-    let mutable director : string = ""
-    let mutable actors : string list = []
+    let title = ref ""
+    let yearMin = ref 0
+    let yearMax = ref 0
+    let countries = ref []
+    let language = ref ""
+    let genres = ref []
+    let director = ref ""
+    let actors = ref []
     
     let setFilters sa = 
         match sa with
-        | Title(s) -> title <- s
-        | YearMin(ymin) -> yearMin <- ymin
-        | YearMax(ymax) -> yearMax <- ymax
-        | Countries(c) -> countries <- c :: countries 
-        | _ -> ()
+        | Title s -> title := s
+        | YearMin n -> yearMin := n
+        | YearMax n -> yearMax := n
+        | Countrie s -> countries := s :: !countries 
+        | Language s -> language := s
+        | Genre s -> genres := s :: !genres
+        | Director s -> director := s
+        | Actor s -> actors := s :: !actors
 
     List.iter setFilters sas
 
+    match searchFilms !title !yearMin !yearMax !countries !language !genres !director !actors with
+    | [] -> eprintf "No films founded."; -1
+    | fs -> List.iter (fun (f : FilmInfos) -> printfn "%4d %4d %s" f.Id f.Year f.Title) fs; 0
+
+
 let doShow argv =
-    match argv with
-    | id :: [] -> printfn "showing"; 0
-    | _ -> printfn "Invalid arguments. Syntax: webflix show <film-id>"; -1
+    let formatList f = String.concat "\n" << List.map ((+) "  " << f)
 
-let doRent argv =
-    match argv with
-    | id :: [] -> printfn "renting"; 0
-    | _ -> printfn "Invalid arguments. Syntax: webflix rent <film-id>"; -1
+    let printFilmDetails f =
+        printfn "Id: %d" f.FilmInfos.Id
+        printfn "Title: %s" f.FilmInfos.Title
+        printfn "Year: %d" f.FilmInfos.Year
+        printfn "Countries:\n%s" (formatList id f.Countries)
+        printfn "Languages:\n%s" (formatList id f.Languages)
+        printfn "Length (min.): %d" f.Length
+        printfn "Genres:\n%s" (formatList id f.Genres)
+        printfn "Director: [%d] %s" (fst f.Director) (snd f.Director)
+        printfn "Scenarists:\n%s" (formatList (fun (id, s) -> sprintf "[%d] %s" id s) f.Scenarists)
+        printfn "Actors:\n%s" (formatList (fun (id, s, rs) -> sprintf "[%d] %s %s" id s (String.concat ", " rs)) f.Actors)
+        printfn "Summary: %s" f.Summary
 
-let doDebug argv =
-    List.iter (printf "[%s]\n") argv; 0
+    let printProfessionalDetails p =
+        printfn "Id: %d" p.Id
+        printfn "Name: %s %s" p.FirstName p.LastName
+        printfn "Birthdate: %s" (p.Birthdate.ToShortDateString ())
+        printfn "Birthplace: %s" p.Birthplace
+        printfn "Biography: %s" p.Biography
+    
+    match argv with
+    | "professional" :: xs ->
+        either (fun err -> eprintfn "%s" err; -1) (fun _ -> 0) (Right xs
+            >>= (extractSingleton >> matchOption (Left "Invalid arguments. Syntax: webflix show professional <pro-id>") Right)
+            >>= (tryParseInt >> matchOption (Left "<pro-id> must be an integer.") Right)
+            >>= (Webflix.queryProfessionalDetails >> matchOption (Left "No professional correspond to this <pro-id>.") (fun f -> printProfessionalDetails f; Right 0)))
+    | _ ->
+        either (fun err -> eprintfn "%s" err; -1) (fun _ -> 0) (Right argv
+            >>= (extractSingleton >> matchOption (Left "Invalid arguments. Syntax: webflix show <film-id>") Right)
+            >>= (tryParseInt >> matchOption (Left "<film-id> must be an integer.") Right)
+            >>= (Webflix.queryFilmDetails >> matchOption (Left "No film correspond to this <film-id>.") (fun f -> printFilmDetails f; Right 0)))
+
+
+let doRent c argv =
+    either (fun err -> eprintfn "%s" err; -1) (fun _ -> 0) (Right argv
+        >>= (extractSingleton >> matchOption (Left "Invalid arguments. Syntax: webflix rent <film-id>") Right)
+        >>= (tryParseInt >> matchOption (Left "<film-id> must be an integer.") Right)
+        >>= (Webflix.rent c >> matchOption (Right ()) Left))
+
+let doOnlyIfConnected f argv =
+    match connect () with
+    | None -> -1
+    | Some c -> f c argv
+
+// --------------------------------------------------
+// Main
+// --------------------------------------------------
 
 [<EntryPoint>]
 let main argv = 
+    let cmds = [
+        ("connect", doConnect)
+        ("disconnect", doOnlyIfConnected doDisconnect)
+        ("search", doSearch)
+        ("show", doShow)
+        ("rent", doOnlyIfConnected doRent)
+        ]
+    let usage = String.concat "\n" (List.map ((+) "  " << fst) cmds)
+
     match Array.toList argv with
-    | "connect" :: xs -> doConnect xs
-    | "search" :: xs -> doSearch xs
-    | "show" :: xs -> doShow xs
-    | "rent" :: xs -> doRent xs
-    | "debug" :: xs -> doDebug xs
-    | _ -> printfn "Unknow command"; -1
+    | x :: xs ->
+        match lookupBy (=) x cmds with
+        | Some f -> f xs
+        | None -> eprintfn "Unknown command. Available commands:\n%s" usage; -1
+    | _ -> eprintfn "No command provided. Available commands:\n%s" usage; -1

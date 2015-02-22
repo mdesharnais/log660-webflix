@@ -16,9 +16,35 @@ open System.Threading.Tasks
 type Id = int
 type CustomerInfo = Id
 type Year = int
-type FilmInfo = {Id : Id; title : string; year : Year}
 
-let connectCustomer (email : string) (password : string) : CustomerInfo = 0
+type FilmInfos = {
+    Id : Id
+    Title : string
+    Year : Year
+}
+
+type FilmDetails= {
+    FilmInfos : FilmInfos
+    Countries : string list
+    Languages : string list
+    Length : int
+    Genres : string list
+    Director : Id * string
+    Scenarists : (Id * string) list
+    Actors : (Id * string * string list) list
+    Summary : string
+}
+
+type ProfessionalDetails = {
+    Id : Id
+    FirstName : string
+    LastName : string
+    Birthdate : DateTime
+    Birthplace : string
+    Biography : string
+}
+
+let connectCustomer (email : string) (password : string) : CustomerInfo option = Some 1
 
 let searchFilms
     (title : string)
@@ -29,14 +55,15 @@ let searchFilms
     (genres : string list)
     (director : string)
     (actors : string list)
-    : FilmInfo list =
-        [ {Id = 1; title = "La communauté des anneaux"; year = 2001}
-        ; {Id = 2; title = "Les deux tours"; year = 2002}
-        ; {Id = 3; title = "Le retour du roi"; year = 2003}]
+    : FilmInfos list =
+        [ {Id = 1; Title = "La communauté des anneaux"; Year = 2001}
+        ; {Id = 2; Title = "Les deux tours"; Year = 2002}
+        ; {Id = 3; Title = "Le retour du roi"; Year = 2003}]
 
-let queryFilmDetails (id : Id) = None
+let queryFilmDetails (id : Id) : FilmDetails option = None
+let queryProfessionalDetails (id : Id) : ProfessionalDetails option = None
 
-let rent (c : CustomerInfo) (f : FilmInfo) = Some "No database connected."
+let rent (c : CustomerInfo) (f : Id) = Some "No database connected."
 
 (*
 [<Literal>]
