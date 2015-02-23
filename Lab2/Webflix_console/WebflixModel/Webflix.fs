@@ -137,7 +137,7 @@ let rent (c : CustomerInfo) (f : Id) =
   let context = EntityConnection.GetDataContext()
   let fullContext = context.DataContext
   let dn = DateTime.Now
-  let newRent =  new EntityConnection.ServiceTypes.RENTING((*todo id*), ID_CUSTOMER = (Convert.ToDecimal c), ID_FILM =  (Convert.ToDecimal f), RENT_DATE = dn)
+  let newRent =  new EntityConnection.ServiceTypes.RENTING(ID_CUSTOMER = (Convert.ToDecimal c), ID_FILM =  (Convert.ToDecimal f), RENT_DATE = dn)
   fullContext.AddObject("RENTINGS", newRent)
   fullContext.CommandTimeout <- nullable 1000
   fullContext.SaveChanges()
