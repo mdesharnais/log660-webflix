@@ -1,11 +1,4 @@
-﻿(*
-webflix connect "username" "password"
-webflix search --title="foo" --year="2014" --lang="en" --lang="fr"
-webflix show 1
-webflix rent 1
-*)
-
-open System
+﻿open System
 open Nessos.UnionArgParser
 open Webflix
 
@@ -17,7 +10,7 @@ type SearchArguments =
     | Title of string
     | YearMin of int
     | YearMax of int
-    | Countrie of string
+    | Country of string
     | Language of string
     | Genre of string
     | Director of string
@@ -115,7 +108,7 @@ let doSearch argv =
         | Title s -> title := s
         | YearMin n -> yearMin := n
         | YearMax n -> yearMax := n
-        | Countrie s -> countries := s :: !countries 
+        | Country s -> countries := s :: !countries 
         | Language s -> language := s
         | Genre s -> genres := s :: !genres
         | Director s -> director := s
