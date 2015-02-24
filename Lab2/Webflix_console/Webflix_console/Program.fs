@@ -140,7 +140,7 @@ let doShow argv =
     let printProfessionalDetails p =
         printfn "Id: %d" p.Id
         printfn "Name: %s %s" p.FirstName p.LastName
-        printfn "Birthdate: %s" (p.Birthdate.ToShortDateString ())
+        printfn "Birthdate: %s" (matchOption "" (fun (d : DateTime) -> d.ToShortDateString ()) p.Birthdate)
         printfn "Birthplace: %s" p.Birthplace
         printfn "Biography: %s" p.Biography
     

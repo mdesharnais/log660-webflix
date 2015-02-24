@@ -39,20 +39,20 @@ type FilmInfos = {
 type FilmDetails = {
     FilmInfos : FilmInfos
     Countries : string list
-    Languages : string list
-    Length : int
+    Language : string option
+    Length : int option
     Genres : string list
-    Director : Id * string
+    Director : (Id * string) option
     Scenarists : (Id * string) list
     Actors : (Id * string * string list) list
-    Summary : string
+    Summary : string option
 }
 
 type ProfessionalDetails = {
     Id : Id
     FirstName : string
     LastName : string
-    Birthdate : DateTime
+    Birthdate : DateTime option
     Birthplace : string
     Biography : string
 }
@@ -119,16 +119,63 @@ let searchFilms
       {Id = 3; Title = "Le retour du roi"; Year = 2003}]
 #endif
    
-let queryFilmDetails (id : Id) : FilmDetails option = None
-  (*let context = EntityConnection.GetDataContext()
-  query { for f in context.FILMS do
-          where f.ID = id
-          select 
-  }
-  |> Seq.toList
-  None*)
+   
+let queryFilmDetails (id : Id) : FilmDetails option =
+#if OracleInstalled
+    let id = Convert.ToDecimal id
+    let context = EntityConnection.GetDataContext()
+    let qs = (query { 
+        for f in context.FILMS do
+        where (f.ID = id)
+        select f
+    }
+    |> Seq.toList)
 
-let queryProfessionalDetails (id : Id) : ProfessionalDetails option = None
+    let a : EntityConnection.ServiceTypes.COUNTRy = null;
+    let nullStringToOption s = if String.IsNullOrEmpty s then None else Some s
+
+    match qs with
+    | [] -> None
+    | [f] -> Some {
+            FilmInfos = {Id = Convert.ToInt32 f.ID; Title = f.TITLE; Year = Convert.ToInt32 (f.YEAR.GetValueOrDefault 0m)}
+            Countries = List.map (fun (x : EntityConnection.ServiceTypes.COUNTRy) -> x.NAME) (Seq.toList (f.COUNTRIES.AsEnumerable ()))
+            Language = nullStringToOption f.LANGUAGE.NAME
+            Length = if f.LENGTH_IN_MINUTES.HasValue then Some (Convert.ToInt32 f.LENGTH_IN_MINUTES.Value) else None
+            Genres = List.map (fun (y : EntityConnection.ServiceTypes.GENRE) -> y.NAME) (Seq.toList (f.GENRES.AsEnumerable ()))
+            Director = if f.ID_DIRECTOR.HasValue then Some (Convert.ToInt32 f.ID_DIRECTOR, f.PROFESSIONAL.FIRST_NAME + " " + f.PROFESSIONAL.LAST_NAME) else None
+            Summary = nullStringToOption f.SUMMARY
+            Scenarists = [] //List.map (fun (g : EntityConnection.ServiceTypes.PROFESSIONAL) -> g.f) (Seq.toList (f.GENRES.AsEnumerable ()))
+            Actors = []
+        }
+    | _ -> None
+#else
+    = None
+#endif
+let queryProfessionalDetails (id : Id) : ProfessionalDetails option = 
+#if OracleInstalled
+  let id = Convert.ToDecimal id
+  let context = EntityConnection.GetDataContext()
+  let qs = (query { 
+    for p in context.PROFESSIONALS do
+    where (p.ID = id)
+    select p
+  }
+  |> Seq.toList)
+
+  match qs with
+    | [] -> None
+    | [p] -> Some {
+            Id = Convert.ToInt32 p.ID
+            FirstName = if String.IsNullOrEmpty p.FIRST_NAME then "" else p.FIRST_NAME
+            LastName = if String.IsNullOrEmpty p.LAST_NAME then "" else p.LAST_NAME
+            Birthdate = if p.BIRTHDATE.HasValue then Some p.BIRTHDATE.Value else None
+            Birthplace= if String.IsNullOrEmpty p.BIRTHPLACE then "" else p.BIRTHPLACE
+            Biography= if String.IsNullOrEmpty p.BIOGRAPHY then "" else p.BIOGRAPHY.[..400]+"..."
+        }
+    | _ -> None
+#else
+    = None
+#endif
 
 let rent (c : CustomerInfo) (f : Id) = 
 #if OracleInstalled
