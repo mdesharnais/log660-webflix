@@ -162,6 +162,7 @@ let queryFilmDetails (id : Id) : FilmDetails option =
 #else
     = None
 #endif
+
 let queryProfessionalDetails (id : Id) : ProfessionalDetails option = 
 #if OracleInstalled
   let id = Convert.ToDecimal id
