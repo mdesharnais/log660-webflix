@@ -123,19 +123,22 @@ let doSearch argv =
 
 let doShow argv =
     let formatList f = String.concat "\n" << List.map ((+) "  " << f)
+    let formatOption f = matchOption "" (fun s -> f s)
+    let intToString (n : int) = n.ToString ()
+    let uncurry = (<||)
 
     let printFilmDetails f =
         printfn "Id: %d" f.FilmInfos.Id
         printfn "Title: %s" f.FilmInfos.Title
         printfn "Year: %d" f.FilmInfos.Year
         printfn "Countries:\n%s" (formatList id f.Countries)
-        printfn "Languages:\n%s" (formatList id f.Languages)
-        printfn "Length (min.): %d" f.Length
+        printfn "Language:\n%s" (formatOption id f.Language)
+        printfn "Length (min.): %s" (formatOption intToString f.Length)
         printfn "Genres:\n%s" (formatList id f.Genres)
-        printfn "Director: [%d] %s" (fst f.Director) (snd f.Director)
+        printfn "Director: %s" (formatOption (uncurry (sprintf "[%d] %s")) f.Director)
         printfn "Scenarists:\n%s" (formatList (fun (id, s) -> sprintf "[%d] %s" id s) f.Scenarists)
-        printfn "Actors:\n%s" (formatList (fun (id, s, rs) -> sprintf "[%d] %s %s" id s (String.concat ", " rs)) f.Actors)
-        printfn "Summary: %s" f.Summary
+        printfn "Actors:\n%s" (formatList (fun (id, s, rs) -> sprintf "[%d] %s (%s)" id s (String.concat ", " rs)) f.Actors)
+        printfn "Summary: %s" (formatOption id f.Summary)
 
     let printProfessionalDetails p =
         printfn "Id: %d" p.Id

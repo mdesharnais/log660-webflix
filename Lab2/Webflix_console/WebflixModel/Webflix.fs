@@ -95,12 +95,6 @@ let searchFilms
 
   query {
     for f in context.FILMS do
-    (*join c in context.COUNTRIES
-      on (c.FILMS)
-    join l in context.LANGUAGES
-      on (f.ID_LANGUAGE = l.ID) 
-    join g in context.GENRES
-      on (f.ID = g.ID)*)
     where ((String.IsNullOrEmpty title || f.TITLE.ToLower().Contains(title.ToLower())) && 
            (yearMin = 0m || f.YEAR ?>= yearMin) && 
            (yearMax = 0m || f.YEAR ?<= yearMax) &&
@@ -123,6 +117,8 @@ let searchFilms
 let queryFilmDetails (id : Id) : FilmDetails option =
 #if OracleInstalled
     let id = Convert.ToDecimal id
+    let apfst f (x, y) = (f x, y)
+    let apsnd f (x, y) = (x, f y)
     let context = EntityConnection.GetDataContext()
     let qs = (query { 
         for f in context.FILMS do
@@ -131,7 +127,22 @@ let queryFilmDetails (id : Id) : FilmDetails option =
     }
     |> Seq.toList)
 
-    let a : EntityConnection.ServiceTypes.COUNTRy = null;
+    let actors = (query {
+      for r in context.FILMS_ROLES do
+      join p in context.PROFESSIONALS on (r.ID_PROFESSIONAL = p.ID)
+      where (r.ID_FILM = id)
+      select (r.ID_PROFESSIONAL, p.FIRST_NAME + " " + p.LAST_NAME)
+      distinct
+    }
+    |> Seq.toList
+    |> List.map (fun (actorId, name) ->
+        (Convert.ToInt32 id, name, query {
+          for r in context.FILMS_ROLES do
+          where (r.ID_FILM = id && r.ID_PROFESSIONAL = actorId)
+          select (r.CHARACTER)
+        } |> Seq.toList)
+      ))
+
     let nullStringToOption s = if String.IsNullOrEmpty s then None else Some s
 
     match qs with
@@ -144,8 +155,8 @@ let queryFilmDetails (id : Id) : FilmDetails option =
             Genres = List.map (fun (y : EntityConnection.ServiceTypes.GENRE) -> y.NAME) (Seq.toList (f.GENRES.AsEnumerable ()))
             Director = if f.ID_DIRECTOR.HasValue then Some (Convert.ToInt32 f.ID_DIRECTOR, f.PROFESSIONAL.FIRST_NAME + " " + f.PROFESSIONAL.LAST_NAME) else None
             Summary = nullStringToOption f.SUMMARY
-            Scenarists = [] //List.map (fun (g : EntityConnection.ServiceTypes.PROFESSIONAL) -> g.f) (Seq.toList (f.GENRES.AsEnumerable ()))
-            Actors = []
+            Scenarists = List.map (fun (p : EntityConnection.ServiceTypes.PROFESSIONAL) -> (Convert.ToInt32 p.ID, p.FIRST_NAME + " " + p.LAST_NAME)) (Seq.toList (f.PROFESSIONALS.AsEnumerable ()))
+            Actors = actors
         }
     | _ -> None
 #else
@@ -179,17 +190,18 @@ let queryProfessionalDetails (id : Id) : ProfessionalDetails option =
 
 let rent (c : CustomerInfo) (f : Id) = 
 #if OracleInstalled
-
-  let nullable value = new System.Nullable<_>(value)
-  let context = EntityConnection.GetDataContext()
-  let fullContext = context.DataContext
-  let dn = DateTime.Now
-  let newRent =  new EntityConnection.ServiceTypes.RENTING(ID_CUSTOMER = (Convert.ToDecimal c), ID_FILM =  (Convert.ToDecimal f), RENT_DATE = dn)
-  fullContext.AddObject("RENTINGS", newRent)
-  fullContext.CommandTimeout <- nullable 1000
-  fullContext.SaveChanges()
-  |> printfn "Saved changes: %d object(s) modified."
-  
+  try
+    let nullable value = new System.Nullable<_>(value)
+    let context = EntityConnection.GetDataContext()
+    let fullContext = context.DataContext
+    let dn = DateTime.Now
+    let newRent =  new EntityConnection.ServiceTypes.RENTING(ID_CUSTOMER = (Convert.ToDecimal c), ID_FILM =  (Convert.ToDecimal f), RENT_DATE = dn)
+    fullContext.AddObject("RENTINGS", newRent)
+    fullContext.CommandTimeout <- nullable 1000
+    let _ = fullContext.SaveChanges()
+    //|> printfn "Saved changes: %d object(s) modified."
+    None
+  with | e -> Some e.Message
   
   (*
   let _ = context.RENTINGS
@@ -199,7 +211,6 @@ let rent (c : CustomerInfo) (f : Id) =
   //let param3 = new OracleParameter("result", OracleDbType.RefCursor, ParameterDirection.Output);
   let _ = context.DataContext.ExecuteStoreCommand("BEGIN PROC_ADD_RENTING(:P_ID_CUSTOMER, :P_ID_FILM); end;", [param1; param2])
   let _ = context.DataContext.ExecuteFunction*)
-  Some "Maybe it worked..."
 #else
    Some "No database connected."
 #endif
