@@ -32,15 +32,15 @@ DECLARE
     current_package_max_rentings number;
     current_rentings_number number;
 BEGIN
-     SELECT packages.max_films INTO current_rentings_number
+     SELECT packages.max_films INTO current_package_max_rentings
      FROM packages JOIN customers ON customers.id_package = packages.id
      WHERE customers.id = :NEW.id_customer;
         
      SELECT COUNT(*) INTO current_rentings_number
-     FROM rentings JOIN customers ON customers.id = rentings.id_customer
-     WHERE customers.id = :NEW.id_customer and rentings.return_date IS NULL;
+     FROM rentings
+     WHERE rentings.id_customer = :NEW.id_customer and rentings.return_date IS NULL;
     
-     IF (current_rentings_number > current_package_max_rentings) THEN
+     IF (current_rentings_number >= current_package_max_rentings) THEN
      	RAISE_APPLICATION_ERROR(-20001, 'Cannot insert renting because the customer has exceeded the number of rented films of his package');
      END IF;
 END trig_check_max_renting;
