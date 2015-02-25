@@ -115,6 +115,7 @@ let doSearch argv =
         | Actor s -> actors := s :: !actors
 
     List.iter setFilters sas
+    List.iter (printfn "%s") !actors
 
     match searchFilms !title !yearMin !yearMax !countries !language !genres !director !actors with
     | [] -> eprintf "No films founded."; -1

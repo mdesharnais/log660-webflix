@@ -20,10 +20,8 @@ open Oracle.ManagedDataAccess.Client
 //Connection in Webflix DB
 [<Literal>]
 let cs = @"DATA SOURCE=big-data-3.logti.etsmtl.ca/LOG660;PERSIST SECURITY INFO=True;USER ID=EQUIPE23;PASSWORD=Jf51vmZi;"
-//SqlEntityConnection Provider ="Oracle.DataAccess.Client   Oracle.ManagedDataAccess.Client"
 type private EntityConnection = SqlEntityConnection<ConnectionString=cs, Provider = "Oracle.ManagedDataAccess.Client", Pluralize = true>
 
-//type private schema = SqlDataConnection<ConnectionString=cs, StoredProcedures = true>
 #endif
 
 type Id = int
@@ -136,7 +134,7 @@ let queryFilmDetails (id : Id) : FilmDetails option =
     }
     |> Seq.toList
     |> List.map (fun (actorId, name) ->
-        (Convert.ToInt32 id, name, query {
+        (Convert.ToInt32 actorId, name, query {
           for r in context.FILMS_ROLES do
           where (r.ID_FILM = id && r.ID_PROFESSIONAL = actorId)
           select (r.CHARACTER)
