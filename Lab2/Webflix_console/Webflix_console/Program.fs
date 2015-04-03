@@ -132,6 +132,7 @@ let doShow argv =
         printfn "Id: %d" f.FilmInfos.Id
         printfn "Title: %s" f.FilmInfos.Title
         printfn "Year: %d" f.FilmInfos.Year
+        printfn "Rate: %s" (formatOption (sprintf "%.1f") f.AverageRate)
         printfn "Countries:\n%s" (formatList id f.Countries)
         printfn "Language:\n%s" (formatOption id f.Language)
         printfn "Length (min.): %s" (formatOption intToString f.Length)
@@ -140,6 +141,7 @@ let doShow argv =
         printfn "Scenarists:\n%s" (formatList (fun (id, s) -> sprintf "[%d] %s" id s) f.Scenarists)
         printfn "Actors:\n%s" (formatList (fun (id, s, rs) -> sprintf "[%d] %s (%s)" id s (String.concat ", " rs)) f.Actors)
         printfn "Summary: %s" (formatOption id f.Summary)
+        printfn "Recommended films:\n%s" (formatList id f.RecommendedFilms)
 
     let printProfessionalDetails p =
         printfn "Id: %d" p.Id

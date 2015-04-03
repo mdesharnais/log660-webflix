@@ -19,7 +19,7 @@ open Oracle.ManagedDataAccess.Client
 
 //Connection in Webflix DB
 [<Literal>]
-let cs = @"DATA SOURCE=big-data-3.logti.etsmtl.ca/LOG660;PERSIST SECURITY INFO=True;USER ID=EQUIPE23;PASSWORD=Jf51vmZi;"
+let cs = @"DATA SOURCE=big-data-3.logti.etsmtl.ca/LOG660;PERSIST SECURITY INFO=True;USER ID=EQUIPE38;PASSWORD=2F8U1IAA;"
 type private EntityConnection = SqlEntityConnection<ConnectionString=cs, Provider = "Oracle.ManagedDataAccess.Client", Pluralize = true>
 
 #endif
@@ -44,6 +44,8 @@ type FilmDetails = {
     Scenarists : (Id * string) list
     Actors : (Id * string * string list) list
     Summary : string option
+    AverageRate : double option
+    RecommendedFilms : string list
 }
 
 type ProfessionalDetails = {
@@ -112,7 +114,7 @@ let searchFilms
 #endif
    
    
-let queryFilmDetails (id : Id) : FilmDetails option =
+let queryFilmDetails (customerId : Id) (id : Id): FilmDetails option =
 #if OracleInstalled
     let id = Convert.ToDecimal id
     let apfst f (x, y) = (f x, y)
@@ -125,6 +127,13 @@ let queryFilmDetails (id : Id) : FilmDetails option =
     }
     |> Seq.toList)
 
+    let averageRate = (query { 
+        for fa in context.VIEW_FILMS_AVERAGE_RATE do
+        where (fa.ID = id)
+        select (fa.AVG_RATE)
+    }
+    |> Seq.exactlyOne)
+    
     let actors = (query {
       for r in context.FILMS_ROLES do
       join p in context.PROFESSIONALS on (r.ID_PROFESSIONAL = p.ID)
@@ -155,6 +164,8 @@ let queryFilmDetails (id : Id) : FilmDetails option =
             Summary = nullStringToOption f.SUMMARY
             Scenarists = List.map (fun (p : EntityConnection.ServiceTypes.PROFESSIONAL) -> (Convert.ToInt32 p.ID, p.FIRST_NAME + " " + p.LAST_NAME)) (Seq.toList (f.PROFESSIONALS.AsEnumerable ()))
             Actors = actors
+            AverageRate = if averageRate.HasValue then Some (Convert.ToDouble averageRate.Value) else None
+            RecommendedFilms = recommendedFilms
         }
     | _ -> None
 #else
